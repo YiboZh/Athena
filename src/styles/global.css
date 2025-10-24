@@ -15,3 +15,38 @@
 .expressive-code {
   width: 100%;
 }
+
+@layer components {
+  .algorithm-list {
+    counter-reset: algorithm-step;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .algorithm-list > li {
+    counter-increment: algorithm-step;
+    position: relative;
+    padding-left: 2.5rem;
+  }
+
+  .algorithm-list > li::before {
+    content: counter(algorithm-step, decimal-leading-zero);
+    position: absolute;
+    left: 0.5rem;
+    top: 0.2rem;
+    font-family: "Times New Roman", Times, serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+    color: rgba(244, 244, 245, 0.8);
+  }
+
+  .algorithm-list > li.stage {
+    counter-increment: none;
+    padding-left: 1.5rem;
+  }
+
+  .algorithm-list > li.stage::before {
+    content: "";
+  }
+}

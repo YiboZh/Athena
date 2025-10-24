@@ -16,7 +16,7 @@ authors:
     url: "https://www.haofrankyang.net/"
     institution: "Johns Hopkins University"
     notes: ["†"]
-conference: "NeurIPS 2025"
+conference: "NeurIPS 2025 (Spotlight)"
 notes:
   - symbol: "*"
     text: "This work was completed while Hongru Du was at Johns Hopkins University."
@@ -24,12 +24,15 @@ notes:
     text: "Correspondence to: Hongru Du and Hao (Frank) Yang."
 links:
   - name: "Paper (PDF)"
-    url: "/assets/athena-paper.pdf"
+    url: "/assets/paper.pdf"
     icon: "ri:file-pdf-2-line"
   - name: "Code (coming soon)"
     url: "#"
     icon: "ri:github-line"
-theme: "device"
+  - name: "Arxiv"
+    url: "#"
+    icon: "academicons:arxiv"
+theme: "dark"
 favicon: "favicon.svg"
 description: "ATHENA is a two-stage framework that unifies symbolic utility discovery with individual-level semantic adaptation to model personalized human decisions, outperforming utility-based, ML, and LLM baselines on travel mode and vaccine choice tasks."
 thumbnail: "screenshot-light.png"
@@ -46,6 +49,8 @@ import YouTubeVideo from "../components/YouTubeVideo.astro";
 import LaTeX from "../components/LaTeX.astro";
 import { Comparison } from "../components/Comparison.tsx";
 import Table from "../components/Table.astro";
+import fig1Final from "../assets/fig1-final.jpg";
+import fig2Update from "../assets/fig2-update.jpg";
 export const components = { table: Table };
 
 <HighlightedSection>
@@ -60,53 +65,406 @@ We study **personalized decision modeling** in settings where individual choices
 
 <TwoColumns>
   <Figure slot="left">
-    <LaTeX slot="figure" formula="P(\,y_i=j\mid X_i\,) = \frac{e^{f(X_i,j;\,\theta)}}{\sum_k e^{f(X_i,k;\,\theta)}}" />
-    <Fragment slot="caption">Choice probability under Random Utility Maximization, where <LaTeX inline formula="f" /> is the systematic utility we learn symbolically. </Fragment>
+    <LaTeX slot="figure" formula="{f^t_{g,k}}_{k=1}^K \sim \phi(\cdot \mid g, C, S, B^{t-1})" />
+    <Fragment slot="caption">
+      <b>Group-level Symbolic Utility Discovery</b> samples candidate symbolic utility functions <LaTeX inline formula="{f^t_{g,k}}_{k=1}^K"/> from the LLM-conditioned distribution <LaTeX inline formula="\phi(\cdot \mid g, C, S, B^{t-1})"/>, guided by the concept library <LaTeX inline formula="C"/>, symbolic library <LaTeX inline formula="S"/>, and prior feedback <LaTeX inline formula="B^{t-1}"/>.
+    </Fragment>
   </Figure>
   <Figure slot="right">
     <LaTeX slot="figure" formula="P^{t+1}_i \leftarrow P^t_i - \eta\,\nabla_{P_i} \, \mathcal{L}(P^t_i, D_i)" />
-    <Fragment slot="caption">Individual‑level **TextGrad** updates a textual **personal template** to reflect heterogeneous preferences and constraints. </Fragment>
+    <Fragment slot="caption">
+      <b>Individual-level Semantic Adaptation</b> refines each person’s <LaTeX inline formula="P_i"/> through iterative updates. This process personalizes the template based on individual data <LaTeX inline formula="D_i"/> and semantic gradients, capturing heterogeneous preferences and contextual constraints.
+    </Fragment>
   </Figure>
 </TwoColumns>
 
+---
+
+<Figure align="center">
+  <Fragment slot="figure">
+    <Picture class="bg-white" src={fig1Final} alt="Two-stage ATHENA pipeline combining symbolic discovery and semantic adaptation" />
+  </Fragment>
+  <Fragment slot="caption">
+    <b>Figure 1:</b> Overview of <b>ATHENA</b> framework. The <i>Group-level symbolic utility discovery</i> stage uses an LLM-driven symbolic optimization to find compact utilities <LaTeX inline formula="f_g^*"/>. The <i>Individual-level semantic adaptation</i> stage refines personalized templates <LaTeX inline formula="\mathcal{P}_i^*"/> via TextGrad to model individual decision rules.
+  </Fragment>
+</Figure>
+
 ### Two‑Stage Pipeline
 
-1. **Group‑level symbolic utility discovery.** LLM‑guided sampling + feedback (mutation/crossover) proposes candidate utility formulas; we select <LaTeX inline formula="f^*_g" /> by cross‑entropy over held‑out data.
-2. **Individual‑level semantic adaptation.** Seeded by <LaTeX inline formula="f^*_g" />, a **personalized semantic template** <LaTeX inline formula="P_i" /> is iteratively improved using **textual gradients** to minimize the individual loss.
+1. **Group‑Level Symbolic Utility Discovery**
+   LLMs sample candidate symbolic utility functions (Eq. 3) from a structured symbolic–semantic space, guided by a concept library <LaTeX inline formula="C"/> and feedback <LaTeX inline formula="B^{t-1}"/>.
+   Through iterative evaluation and mutation/crossover, the model converges to the **optimal symbolic utility** <LaTeX inline formula="f_g^*"/> that best captures group‑level decision regularities.
+
+2. **Individual‑Level Semantic Adaptation**
+   Using the discovered <LaTeX inline formula="f_g^*"/> as a strong prior, each individual’s **textual semantic template** <LaTeX inline formula="P_i"/> is optimized by TextGrad (Eq. 7) to incorporate heterogeneous personal preferences and constraints.
+   The adaptation continues until the template converges to <LaTeX inline formula="P_i^*"/>.
+
+---
+
+<Figure align="center">
+  <LaTeX slot="figure" formula="\hat{y}_i \sim \phi\big(P_i^*, X_i \,\big|\, f_g^*(X_i; \theta_g^*)\big)" />
+  <Fragment slot="caption">
+    <b>Personalized Decision Inference</b> integrates the learned symbolic utility <LaTeX inline formula="f_g^*"/> with the adapted semantic template <LaTeX inline formula="P_i^*"/> to generate individualized predictions <LaTeX inline formula="\hat{y}_i"/> that reflect both group‑level reasoning and personal context.
+  </Fragment>
+</Figure>
+
+---
+
+<Figure align="center">
+  <Fragment slot="figure">
+    <Picture src={fig2Update} alt="Optimization flow diagram showing symbolic feedback and TextGrad updates" />
+  </Fragment>
+  <Fragment slot="caption">
+    <b>Figure 2:</b> <b>ATHENA pipeline applied to travel–mode choice.</b> Using <i>Swissmetro</i> as an example, the <i>Initialization</i> encodes constraints and symbolic features. In <i>Group-level optimization</i>, LLMs sample and prune utility formulas <LaTeX inline formula="\{f_g^*\}"/>. In <i>Individual adaptation</i>, each <LaTeX inline formula="f_g^*"/> guides a personalized prompt <LaTeX inline formula="\mathcal{P}_i^*"/> to capture heterogeneity.
+  </Fragment>
+</Figure>
+
+<div class="not-prose mx-auto mt-10 w-full max-w-[56rem] overflow-hidden rounded-xl border border-zinc-600/30 bg-gradient-to-br from-zinc-900/80 via-zinc-950/70 to-black/70 shadow-xl backdrop-blur supports-[backdrop-filter]:bg-zinc-900/55">
+  <h3 class="px-8 pt-6 text-center text-xl font-semibold tracking-wide text-zinc-100">
+    Algorithm 1 · ATHENA Optimization Flow
+  </h3>
+  <div
+    class="mt-4 bg-zinc-900/40 px-8 pb-6 pt-4 text-[0.95rem] text-zinc-100 md:text-base"
+    style="font-family: 'Times New Roman', Times, serif;"
+  >
+    <ol class="algorithm-list space-y-2 leading-relaxed text-zinc-200">
+      <li>
+        <span class="font-semibold text-zinc-100">Require</span> Demographic group <span class="ml-1"><LaTeX inline formula="g" /></span>, dataset <span class="ml-1"><LaTeX inline formula="\mathcal{D}_g" /></span>, domain concept <span class="ml-1"><LaTeX inline formula="\mathcal{C}" /></span>, symbolic building block <span class="ml-1"><LaTeX inline formula="\mathcal{S}" /></span>
+      </li>
+      <li>
+        <span class="font-semibold text-zinc-100">Initialize</span> <span class="ml-1"><LaTeX inline formula="\mathcal{B}_0 \leftarrow \texttt{None}" /></span>
+      </li>
+      <li class="stage">
+        <span class="italic text-zinc-100">// Stage 1: Group-Level Symbolic Utility Discovery</span>
+      </li>
+      <li>
+        <span class="font-semibold text-zinc-100">for</span>
+        <span class="ml-1"><LaTeX inline formula="t = 1 \text{ to } T" /></span>
+        <span class="font-semibold text-zinc-100 ml-1">do</span>
+        <div class="ml-6 mt-1 space-y-1 text-zinc-200">
+          <div>
+            Sample symbolic utility functions <span class="ml-1"><LaTeX inline formula="\{f_{g,k}^{t}\}_{k=1}^K \sim \phi(\cdot \mid g, \mathcal{C}, \mathcal{S}, \mathcal{B}^{t-1})" /></span>
+          </div>
+          <div>
+            Update <span class="ml-1"><LaTeX inline formula="\mathcal{B}^t \leftarrow \{f_{g,+}^t, f_{g,-}^t\}" /></span>
+            using Eq. <span class="ml-1"><LaTeX inline formula="(3)" /></span>
+          </div>
+          <div>
+            Select best function <span class="ml-1"><LaTeX inline formula="f_g^* \leftarrow \arg\min_{f \in \mathcal{F}_g} \mathcal{L}_g(f, \mathcal{D}_g)" /></span>
+          </div>
+          <div>
+            <span class="font-semibold text-zinc-100">if</span>
+            <span class="ml-1">stopping condition in Eq.</span>
+            <span class="ml-1"><LaTeX inline formula="(4)" /></span>
+            <span class="font-semibold text-zinc-100 ml-1">then break</span>
+          </div>
+        </div>
+      </li>
+      <li class="stage">
+        <span class="italic text-zinc-100">// Stage 2: Individual-Level Semantic Adaptation</span>
+      </li>
+      <li>
+        <span class="font-semibold text-zinc-100">for each</span>
+        <span class="ml-1">individual</span>
+        <span class="ml-1"><LaTeX inline formula="i \in g" /></span>
+        <div class="ml-6 mt-1 space-y-1 text-zinc-200">
+          <div>
+            Initialize semantic template <span class="ml-1"><LaTeX inline formula="\mathcal{P}_i^{0} \sim \phi( \cdot \mid f_g^*, i, \mathcal{C})" /></span>
+          </div>
+          <div>
+            <span class="font-semibold text-zinc-100">for</span>
+            <span class="ml-1"><LaTeX inline formula="t = 1 \text{ to } T'" /></span>
+            <span class="font-semibold text-zinc-100 ml-1">do</span>
+            <div class="ml-5 mt-1 text-zinc-200">
+              Update <span class="ml-1"><LaTeX inline formula="\mathcal{P}_i^{t+1} \leftarrow \mathcal{P}_i^{t} - \eta \nabla \mathcal{L}_i(\mathcal{P}_i^{t}, \mathcal{D}_i)" /></span>
+              using Eq. <span class="ml-1"><LaTeX inline formula="(7)" /></span>
+            </div>
+          </div>
+        </div>
+      </li>
+      <li>
+        <span class="font-semibold text-zinc-100">return</span>
+        <span class="ml-1"><LaTeX inline formula="\{\mathcal{P}_i^{*}\}_{i \in g}" /></span>,
+        <span class="ml-1">predict decisions using Eq.</span> <span class="ml-1"><LaTeX inline formula="(8)" /></span>
+      </li>
+    </ol>
+  </div>
+</div>
 
 ## Results
 
-### Overall performance on Swissmetro & Vaccine
+### Overall Performance
 
-| Task | Best Baseline (Acc/F1) | **ATHENA** (Acc/F1) | AUC | Note |
-| :-- | :-- | :-- | :-- | :-- |
-| Swissmetro | ≈ 0.75 / 0.71 (few‑shot LLM / ML) | **0.81 / 0.77** | **0.88** | +≥6% Acc, +≥6.5% F1 over strongest baseline |
-| Vaccine | ≈ 0.67 / 0.67 (ML) | **0.73 / 0.72** | **0.87** | Best F1 and AUC among all methods |
+<div class="not-prose overflow-x-auto" id="baseline_comparison">
+  <table style="font-size: 0.85rem; width: 100%; border-collapse: collapse;">
+    <caption style="caption-side: top; text-align: left; font-weight: 600; margin-bottom: 0.5rem;">
+      Performance comparison of LLM-based, classical choice, and machine learning methods on the three-class Swissmetro and three-class COVID-19 Vaccine choice tasks.
+    </caption>
+    <thead>
+      <tr>
+        <th style="border-bottom: 1px solid #444; padding: 6px; width: 8%;"></th>
+        <th style="border-bottom: 1px solid #444; padding: 6px; width: 16%; text-align: left;">Method</th>
+        <th style="border-bottom: 1px solid #444; padding: 6px; width: 16%; text-align: left;">LLM Model</th>
+        <th style="border-bottom: 1px solid #444; padding: 6px;" colspan="4">Swissmetro</th>
+        <th style="border-bottom: 1px solid #444; padding: 6px;" colspan="4">Vaccine</th>
+      </tr>
+      <tr>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th style="padding: 6px;">Acc. ↑</th>
+        <th style="padding: 6px;">F1. ↑</th>
+        <th style="padding: 6px;">CE ↓</th>
+        <th style="padding: 6px;">AUC ↑</th>
+        <th style="padding: 6px;">Acc. ↑</th>
+        <th style="padding: 6px;">F1. ↑</th>
+        <th style="padding: 6px;">CE ↓</th>
+        <th style="padding: 6px;">AUC ↑</th>
+      </tr>
+    </thead>
+    <tbody>
+      {/* LLM-Based */}
+      <tr>
+        <td style="border-top: 1px solid #444; padding: 6px;" rowspan="10"><b>LLM-<br/>Based</b></td>
+        <td style="border-top: 1px solid #444; padding: 6px;" rowspan="2">Zeroshot</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">gemini-2.0-flash</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.5920</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.2940</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.9257</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.6561</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.5800</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.5092</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.8328</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.7607</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">GPT-4o-mini</td>
+        <td style="padding: 6px;">0.6300</td>
+        <td style="padding: 6px;">0.2757</td>
+        <td style="padding: 6px;">2.7258</td>
+        <td style="padding: 6px;">0.3657</td>
+        <td style="padding: 6px;">0.5433</td>
+        <td style="padding: 6px;">0.5387</td>
+        <td style="padding: 6px;">0.8562</td>
+        <td style="padding: 6px;">0.7395</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;" rowspan="2">Zeroshot-CoT</td>
+        <td style="padding: 6px;">gemini-2.0-flash</td>
+        <td style="padding: 6px;">0.5880</td>
+        <td style="padding: 6px;">0.3478</td>
+        <td style="padding: 6px;">0.9415</td>
+        <td style="padding: 6px;">0.6331</td>
+        <td style="padding: 6px;">0.5800</td>
+        <td style="padding: 6px;">0.5073</td>
+        <td style="padding: 6px;">0.8436</td>
+        <td style="padding: 6px;">0.7526</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">GPT-4o-mini</td>
+        <td style="padding: 6px;">0.6420</td>
+        <td style="padding: 6px;">0.2960</td>
+        <td style="padding: 6px;">0.8957</td>
+        <td style="padding: 6px;">0.6237</td>
+        <td style="padding: 6px;">0.5500</td>
+        <td style="padding: 6px;">0.5353</td>
+        <td style="padding: 6px;">0.8540</td>
+        <td style="padding: 6px;">0.7465</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;" rowspan="2">Fewshot</td>
+        <td style="padding: 6px;">gemini-2.0-flash</td>
+        <td style="padding: 6px;">0.7580</td>
+        <td style="padding: 6px;">0.7027</td>
+        <td style="padding: 6px;">8.7244</td>
+        <td style="padding: 6px;">0.7956</td>
+        <td style="padding: 6px;">0.5667</td>
+        <td style="padding: 6px;">0.5740</td>
+        <td style="padding: 6px;">12.0324</td>
+        <td style="padding: 6px;">0.7053</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">GPT-4o-mini</td>
+        <td style="padding: 6px;">0.6815</td>
+        <td style="padding: 6px;">0.4945</td>
+        <td style="padding: 6px;">7.0029</td>
+        <td style="padding: 6px;">0.7395</td>
+        <td style="padding: 6px;">0.5067</td>
+        <td style="padding: 6px;">0.5097</td>
+        <td style="padding: 6px;">6.6110</td>
+        <td style="padding: 6px;">0.6891</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;" rowspan="2">TextGrad</td>
+        <td style="padding: 6px;">gemini-2.0-flash</td>
+        <td style="padding: 6px;">0.5568</td>
+        <td style="padding: 6px;">0.2980</td>
+        <td style="padding: 6px;">1.2011</td>
+        <td style="padding: 6px;">0.5400</td>
+        <td style="padding: 6px;">0.4241</td>
+        <td style="padding: 6px;">0.4014</td>
+        <td style="padding: 6px;">5.7813</td>
+        <td style="padding: 6px;">0.6363</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">GPT-4o-mini</td>
+        <td style="padding: 6px;">0.6500</td>
+        <td style="padding: 6px;">0.3620</td>
+        <td style="padding: 6px;">0.9079</td>
+        <td style="padding: 6px;">0.5364</td>
+        <td style="padding: 6px;">0.5084</td>
+        <td style="padding: 6px;">0.4962</td>
+        <td style="padding: 6px;">4.5412</td>
+        <td style="padding: 6px;">0.6709</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;" rowspan="2"><b><span style="font-variant: small-caps;">ATHENA</span></b></td>
+        <td style="padding: 6px;">gemini-2.0-flash</td>
+        <td style="padding: 6px;">0.7679</td>
+        <td style="padding: 6px;">0.7222</td>
+        <td style="padding: 6px;">0.9041</td>
+        <td style="padding: 6px;">0.8387</td>
+        <td style="padding: 6px;">0.6797</td>
+        <td style="padding: 6px;">0.5968</td>
+        <td style="padding: 6px;">0.7610</td>
+        <td style="padding: 6px;">0.8370</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">GPT-4o-mini</td>
+        <td style="padding: 6px;"><b>0.8134</b></td>
+        <td style="padding: 6px;"><b>0.7655</b></td>
+        <td style="padding: 6px;">1.0863</td>
+        <td style="padding: 6px;"><b>0.8825</b></td>
+        <td style="padding: 6px;"><b>0.7345</b></td>
+        <td style="padding: 6px;"><b>0.7161</b></td>
+        <td style="padding: 6px;">0.7551</td>
+        <td style="padding: 6px;"><b>0.8704</b></td>
+      </tr>
 
-Values summarized from the main table; see paper for exact numbers and settings.
+      {/* Utility Theory */}
+      <tr>
+        <td style="border-top: 1px solid #444; padding: 6px;" rowspan="3"><b>Utility<br/>Theory</b></td>
+        <td style="border-top: 1px solid #444; padding: 6px;">MNL</td>
+        <td style="border-top: 1px solid #444; padding: 6px; text-align: center;">/</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.6101</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.3887</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.8353</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.7074</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.4150</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.1955</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">1.0510</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.4301</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">CLogit</td>
+        <td style="padding: 6px; text-align: center;">/</td>
+        <td style="padding: 6px;">0.5714</td>
+        <td style="padding: 6px;">0.2424</td>
+        <td style="padding: 6px;">0.8916</td>
+        <td style="padding: 6px;">0.5976</td>
+        <td style="padding: 6px;">0.4150</td>
+        <td style="padding: 6px;">0.1955</td>
+        <td style="padding: 6px;">1.0510</td>
+        <td style="padding: 6px;">0.5000</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">Latent Class MNL</td>
+        <td style="padding: 6px; text-align: center;">/</td>
+        <td style="padding: 6px;">0.6101</td>
+        <td style="padding: 6px;">0.3967</td>
+        <td style="padding: 6px;">0.8175</td>
+        <td style="padding: 6px;">0.7182</td>
+        <td style="padding: 6px;">0.1950</td>
+        <td style="padding: 6px;">0.1088</td>
+        <td style="padding: 6px;">1.0986</td>
+        <td style="padding: 6px;">0.5000</td>
+      </tr>
 
-### Why it works
-
-- **Interpretable structure.** Symbolic utilities converge to compact, reusable fragments (e.g., age–trust interactions), improving generalization and insight.
-- **Personalization.** TextGrad adapts from a strong symbolic prior, avoiding local minima of unguided prompting. Ablations show either stage alone underperforms the full pipeline.
-
-## Demo & Artifacts
-
-- 🧪 **Datasets:** Swissmetro (mode choice), COVID‑19 Vaccine choice (international survey subset).
-- 🧩 **Backbones:** gpt‑4o‑mini, gemini‑2.0‑flash (others in appendix).
-- 🛠️ **Code:** to be released.
+      {/* Machine Learning */}
+      <tr>
+        <td style="border-top: 1px solid #444; padding: 6px;" rowspan="6"><b>Machine<br/>Learning</b></td>
+        <td style="border-top: 1px solid #444; padding: 6px;">Logistic Regression</td>
+        <td style="border-top: 1px solid #444; padding: 6px; text-align: center;">/</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.5620</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.5570</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.9310</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.7460</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.6500</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.6690</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.7630</td>
+        <td style="border-top: 1px solid #444; padding: 6px;">0.8330</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">Random Forest</td>
+        <td style="padding: 6px; text-align: center;">/</td>
+        <td style="padding: 6px;">0.7100</td>
+        <td style="padding: 6px;">0.7050</td>
+        <td style="padding: 6px;">0.7380</td>
+        <td style="padding: 6px;">0.8810</td>
+        <td style="padding: 6px;">0.6300</td>
+        <td style="padding: 6px;">0.6470</td>
+        <td style="padding: 6px;"><b>0.7290</b></td>
+        <td style="padding: 6px;">0.8420</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">XGBoost</td>
+        <td style="padding: 6px; text-align: center;">/</td>
+        <td style="padding: 6px;">0.7080</td>
+        <td style="padding: 6px;">0.7050</td>
+        <td style="padding: 6px;">0.7040</td>
+        <td style="padding: 6px;">0.8810</td>
+        <td style="padding: 6px;">0.6300</td>
+        <td style="padding: 6px;">0.6480</td>
+        <td style="padding: 6px;">1.1420</td>
+        <td style="padding: 6px;">0.8150</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">BERT</td>
+        <td style="padding: 6px; text-align: center;">/</td>
+        <td style="padding: 6px;">0.7246</td>
+        <td style="padding: 6px;">0.4994</td>
+        <td style="padding: 6px;"><b>0.7037</b></td>
+        <td style="padding: 6px;">0.8811</td>
+        <td style="padding: 6px;">0.6350</td>
+        <td style="padding: 6px;">0.6541</td>
+        <td style="padding: 6px;">0.7409</td>
+        <td style="padding: 6px;">0.8168</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">TabNet</td>
+        <td style="padding: 6px; text-align: center;">/</td>
+        <td style="padding: 6px;">0.6375</td>
+        <td style="padding: 6px;">0.4060</td>
+        <td style="padding: 6px;">0.7887</td>
+        <td style="padding: 6px;">0.8810</td>
+        <td style="padding: 6px;">0.6650</td>
+        <td style="padding: 6px;">0.6684</td>
+        <td style="padding: 6px;">0.8968</td>
+        <td style="padding: 6px;">0.8147</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px;">MLP</td>
+        <td style="padding: 6px; text-align: center;">/</td>
+        <td style="padding: 6px;">0.6475</td>
+        <td style="padding: 6px;">0.6386</td>
+        <td style="padding: 6px;">0.7626</td>
+        <td style="padding: 6px;">0.8350</td>
+        <td style="padding: 6px;">0.6068</td>
+        <td style="padding: 6px;">0.6062</td>
+        <td style="padding: 6px;">0.9320</td>
+        <td style="padding: 6px;">0.8205</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 ## BibTeX
 
 ```bibtex
 @inproceedings{zhao2025athena,
   title        = {Personalized Decision Modeling: Utility Optimization or Textualized-Symbolic Reasoning},
-  author       = {Yibo Zhao and Yang Zhao and Hongru Du and Hao Frank Yang},
-  booktitle    = {NeurIPS},
+  author       = {Yibo Zhao, Yang Zhao, Hongru Du, Hao Frank Yang},
+  booktitle    = {The Thirty-Ninth Annual Conference on Neural Information Processing Systems (NeurIPS)},
   year         = {2025}
 }
 ```
-
-## Acknowledgments
-
-We thank collaborators and domain experts whose feedback informed the **Concept Library** used during symbolic discovery.
